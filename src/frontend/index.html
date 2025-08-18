@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unravel - Personal AI Pattern Processor</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧵</text></svg>">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16 2C22.627 2 28 7.373 28 14C28 20.627 22.627 26 16 26C9.373 26 4 20.627 4 14C4 7.373 9.373 2 16 2Z" stroke="currentColor" stroke-width="2" fill="none" opacity="0.3"/>
+                            <path d="M16 6C20.418 6 24 9.582 24 14C24 18.418 20.418 22 16 22C11.582 22 8 18.418 8 14C8 9.582 11.582 6 16 6Z" stroke="currentColor" stroke-width="2" fill="none" opacity="0.6"/>
+                            <path d="M16 10C18.209 10 20 11.791 20 14C20 16.209 18.209 18 16 18C13.791 18 12 16.209 12 14C12 11.791 13.791 10 16 10Z" stroke="currentColor" stroke-width="2" fill="none"/>
+                            <circle cx="16" cy="14" r="2" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <h1>Unravel</h1>
+                    <span class="subtitle">Personal AI Pattern Processor</span>
+                </div>
+                <div class="header-controls">
+                    <button class="settings-btn" onclick="openSettings()" title="Settings & API Keys">
+                        ⚙️
+                    </button>
+                    <div class="theme-selector">
+                        <select id="themeSelect" onchange="switchTheme(this.value)">
+                            <option value="dark">🌙 Dark</option>
+                            <option value="light">☀️ Light</option>
+                            <option value="contrast">🔆 High Contrast</option>
+                            <option value="warm">🔥 Warm</option>
+                            <option value="fabric">⚡ Fabric</option>
+                        </select>
+                    </div>
+                    <div class="status-indicator" id="statusIndicator">
+                        <div class="status-dot offline"></div>
+                        <span class="status-text">connecting...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            
+            <!-- Configuration Panel -->
+            <div class="config-panel">
+                <div class="config-section">
+                    <label for="patternSelect">Pattern</label>
+                    <select id="patternSelect" onchange="onPatternChange(this.value)">
+                        <option value="">Select a pattern...</option>
+                    </select>
+                </div>
+                
+                <div class="config-section">
+                    <label for="providerSelect">AI Provider</label>
+                    <select id="providerSelect" onchange="onProviderChange(this.value)">
+                        <option value="">Select provider...</option>
+                    </select>
+                </div>
+                
+                <div class="config-section">
+                    <label for="modelSelect">Model</label>
+                    <select id="modelSelect">
+                        <option value="">Select model...</option>
+                    </select>
+                </div>
+
+                <div class="config-section advanced-options" style="display: none;">
+                    <details>
+                        <summary>Advanced Options</summary>
+                        <div class="options-grid">
+                            <div class="option">
+                                <label for="temperature">Temperature</label>
+                                <input type="range" id="temperature" min="0" max="2" step="0.1" value="0.7">
+                                <span class="option-value">0.7</span>
+                            </div>
+                            <div class="option">
+                                <label for="maxTokens">Max Tokens</label>
+                                <input type="number" id="maxTokens" min="100" max="8192" value="2048">
+                            </div>
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+            <!-- Pattern Preview/Edit -->
+            <div class="pattern-preview" id="patternPreview" style="display: none;">
+                <div class="pattern-tabs">
+                    <button class="pattern-tab active" data-type="preview" onclick="switchPatternTab('preview')">
+                        👁️ Preview
+                    </button>
+                    <button class="pattern-tab" data-type="edit" onclick="switchPatternTab('edit')">
+                        ✏️ Edit
+                    </button>
+                </div>
+                
+                <div class="pattern-tab-content" id="patternPreviewContent">
+                    <div class="pattern-content" id="patternContent"></div>
+                </div>
+                
+                <div class="pattern-tab-content" id="patternEditContent" style="display: none;">
+                    <div class="pattern-edit-header">
+                        <button class="pattern-btn reset-btn" onclick="resetPattern()" title="Reset to original">
+                            🔄 Reset
+                        </button>
+                        <button class="pattern-btn save-btn" onclick="savePattern()" title="Save as custom pattern">
+                            💾 Save Custom
+                        </button>
+                    </div>
+                    <textarea id="patternEditor" class="pattern-editor" placeholder="Loading pattern..."></textarea>
+                </div>
+            </div>
+
+            <!-- Input Section -->
+            <div class="input-section">
+                <div class="input-tabs">
+                    <button class="input-tab active" data-type="text" onclick="switchInputType('text')">
+                        📝 Text
+                    </button>
+                    <button class="input-tab" data-type="file" onclick="switchInputType('file')">
+                        📄 File
+                    </button>
+                    <button class="input-tab" data-type="url" onclick="switchInputType('url')">
+                        🌐 URL
+                    </button>
+                    <button class="input-tab" data-type="youtube" onclick="switchInputType('youtube')">
+                        📺 YouTube
+                    </button>
+                </div>
+
+                <!-- Text Input -->
+                <div class="input-content" id="textInput">
+                    <textarea id="textArea" placeholder="Enter your text here..." rows="8"></textarea>
+                </div>
+
+                <!-- File Input -->
+                <div class="input-content" id="fileInput" style="display: none;">
+                    <div class="file-drop-zone" id="fileDropZone">
+                        <div class="file-drop-icon">📄</div>
+                        <div class="file-drop-text">
+                            <p>Drop a file here or <strong>click to browse</strong></p>
+                            <small>Supported: .txt, .md, .pdf, .docx (max 50MB)</small>
+                        </div>
+                        <input type="file" id="fileSelector" accept=".txt,.md,.pdf,.docx,.json,.csv" style="display: none;">
+                    </div>
+                    <div class="file-info" id="fileInfo" style="display: none;">
+                        <div class="file-details">
+                            <strong id="fileName"></strong>
+                            <span id="fileSize"></span>
+                            <button onclick="removeFile()" class="remove-file">✕</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- URL Input -->
+                <div class="input-content" id="urlInput" style="display: none;">
+                    <input type="url" id="urlField" placeholder="https://example.com/article">
+                    <div class="url-info" id="urlInfo"></div>
+                </div>
+
+                <!-- YouTube Input -->
+                <div class="input-content" id="youtubeInput" style="display: none;">
+                    <input type="url" id="youtubeField" placeholder="https://youtube.com/watch?v=...">
+                    <div class="youtube-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="includeDescription" checked>
+                            <span>Include video description</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="includeTranscript" checked>
+                            <span>Include transcript/captions (if available)</span>
+                        </label>
+                    </div>
+                    <div class="youtube-info" id="youtubeInfo"></div>
+                </div>
+
+                <!-- Process Button -->
+                <div class="process-section">
+                    <button class="process-btn" id="processBtn" onclick="processInput()" disabled>
+                        <span class="btn-icon">⚡</span>
+                        <span class="btn-text">Process</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section" id="resultsSection" style="display: none;">
+                <!-- Loading State -->
+                <div class="loading" id="loadingState">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">Processing with AI...</div>
+                    <div class="loading-details" id="loadingDetails"></div>
+                </div>
+
+                <!-- Results -->
+                <div class="results" id="results" style="display: none;">
+                    <div class="results-header">
+                        <h3>Results</h3>
+                        <div class="results-actions">
+                            <button onclick="copyResults()" class="action-btn">
+                                📋 Copy
+                            </button>
+                            <button onclick="downloadResults()" class="action-btn">
+                                💾 Download
+                            </button>
+                            <button onclick="clearResults()" class="action-btn">
+                                🗑️ Clear
+                            </button>
+                        </div>
+                    </div>
+                    <div class="results-content">
+                        <div class="results-text" id="resultsText"></div>
+                        <div class="results-metadata" id="resultsMetadata"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>⚙️ Settings & API Keys</h2>
+                <button class="modal-close" onclick="closeSettings()">✕</button>
+            </div>
+            <div class="modal-content">
+                <div class="settings-section">
+                    <h3>🤖 AI Provider API Keys</h3>
+                    <p class="settings-description">Add your API keys to enable online AI providers. Keys are stored locally in your browser.</p>
+                    
+                    <div class="api-key-form">
+                        <div class="form-group">
+                            <label for="openaiKey">OpenAI API Key</label>
+                            <div class="key-input-group">
+                                <input type="password" id="openaiKey" placeholder="sk-...">
+                                <span class="key-status" id="openaiStatus">❌</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="anthropicKey">Anthropic API Key</label>
+                            <div class="key-input-group">
+                                <input type="password" id="anthropicKey" placeholder="sk-ant-...">
+                                <span class="key-status" id="anthropicStatus">❌</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="openrouterKey">OpenRouter API Key</label>
+                            <div class="key-input-group">
+                                <input type="password" id="openrouterKey" placeholder="sk-or-...">
+                                <span class="key-status" id="openrouterStatus">❌</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="grokKey">Grok API Key</label>
+                            <div class="key-input-group">
+                                <input type="password" id="grokKey" placeholder="xai-...">
+                                <span class="key-status" id="grokStatus">❌</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="youtubeKey">YouTube API Key</label>
+                            <div class="key-input-group">
+                                <input type="password" id="youtubeKey" placeholder="AIza...">
+                                <span class="key-status" id="youtubeStatus">❌</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="jinaKey">Jina AI API Key</label>
+                            <div class="key-input-group">
+                                <input type="password" id="jinaKey" placeholder="jina_...">
+                                <span class="key-status" id="jinaStatus">❌</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>🎯 Preferences</h3>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="saveResults" checked>
+                            <span>Save processing results locally</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="showAdvanced">
+                            <span>Show advanced options by default</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="clearAllKeys()">Clear All Keys</button>
+                <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/themes.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/settings.js"></script>
+</body>
+</html>

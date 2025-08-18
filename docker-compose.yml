@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  unravel:
+    build: .
+    container_name: unravel
+    ports:
+      - "3007:3006"
+    environment:
+      - PORT=3006
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434  # For local Ollama
+      # Uncomment and set your API keys (or use web interface)
+      # - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      # - GROK_API_KEY=${GROK_API_KEY}
+      # - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
+      # - JINA_API_KEY=${JINA_API_KEY}
+    volumes:
+      # Optional: Mount patterns directory for easy editing
+      # - ./patterns:/app/patterns:ro
+      # Optional: Mount uploads directory for persistence
+      # - ./uploads:/app/uploads
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Optional: Include Ollama for local AI processing
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   restart: unless-stopped
+
+# volumes:
+#   ollama_data:
