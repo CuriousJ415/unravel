@@ -346,6 +346,86 @@ router.post('/process-youtube', async (req, res) => {
 });
 
 /**
+ * GET /api/settings
+ * Get user settings from persistent storage
+ */
+router.get('/settings', async (req, res) => {
+    try {
+        const settings = await unravelService.getSettings();
+        res.json(settings);
+    } catch (error) {
+        res.status(500).json({
+            error: 'Failed to get settings',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/settings
+ * Save user settings to persistent storage
+ */
+router.post('/settings', async (req, res) => {
+    try {
+        const settings = req.body;
+        const result = await unravelService.saveSettings(settings);
+        res.json({ success: true, ...result });
+    } catch (error) {
+        res.status(500).json({
+            error: 'Failed to save settings',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/patterns/custom
+ * Create or update a custom pattern
+ */
+router.post('/patterns/custom', async (req, res) => {
+    try {
+        const { name, category, description, content } = req.body;
+        
+        if (!name || !content) {
+            return res.status(400).json({
+                error: 'Pattern name and content are required'
+            });
+        }
+        
+        const result = await unravelService.saveCustomPattern(name, {
+            category: category || 'custom',
+            description: description || '',
+            content,
+            created: new Date().toISOString()
+        });
+        
+        res.json({ success: true, pattern: result });
+    } catch (error) {
+        res.status(500).json({
+            error: 'Failed to save custom pattern',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * DELETE /api/patterns/custom/:name
+ * Delete a custom pattern
+ */
+router.delete('/patterns/custom/:name', async (req, res) => {
+    try {
+        const { name } = req.params;
+        await unravelService.deleteCustomPattern(name);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(404).json({
+            error: 'Failed to delete custom pattern',
+            message: error.message
+        });
+    }
+});
+
+/**
  * Error handling middleware
  */
 router.use((error, req, res, next) => {

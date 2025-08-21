@@ -293,6 +293,22 @@
                 </div>
                 
                 <div class="settings-section">
+                    <h3>📝 Pattern Management</h3>
+                    <p class="settings-description">Enable/disable patterns to customize your pattern selection dropdown.</p>
+                    
+                    <div class="pattern-management">
+                        <div class="pattern-controls">
+                            <button type="button" class="btn-secondary" onclick="toggleAllPatterns(true)">Enable All</button>
+                            <button type="button" class="btn-secondary" onclick="toggleAllPatterns(false)">Disable All</button>
+                            <button type="button" class="btn-primary" onclick="showCustomPatternDialog()">+ Create Custom</button>
+                        </div>
+                        <div class="pattern-list" id="patternToggleList">
+                            <!-- Pattern toggles will be populated here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
                     <h3>🎯 Preferences</h3>
                     <div class="form-group">
                         <label class="checkbox-label">
@@ -315,11 +331,78 @@
         </div>
     </div>
 
+    <!-- Custom Pattern Creation Modal -->
+    <div class="modal-overlay" id="customPatternModal" style="display: none;">
+        <div class="modal large">
+            <div class="modal-header">
+                <h2>✨ Create Custom Pattern</h2>
+                <button class="modal-close" onclick="closeCustomPatternDialog()">✕</button>
+            </div>
+            <div class="modal-content">
+                <div class="form-group">
+                    <label for="customPatternName">Pattern Name</label>
+                    <input type="text" id="customPatternName" placeholder="my_custom_pattern" maxlength="50">
+                    <small>Use lowercase letters, numbers, and underscores only</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customPatternCategory">Category</label>
+                    <select id="customPatternCategory">
+                        <option value="custom">Custom</option>
+                        <option value="content_analysis">Content Analysis</option>
+                        <option value="writing_communication">Writing & Communication</option>
+                        <option value="business_professional">Business & Professional</option>
+                        <option value="learning_research">Learning & Research</option>
+                        <option value="technical">Technical</option>
+                        <option value="creative_media">Creative & Media</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customPatternDescription">Description</label>
+                    <input type="text" id="customPatternDescription" placeholder="Brief description of what this pattern does" maxlength="100">
+                </div>
+                
+                <div class="form-group">
+                    <label for="patternTemplate">Template</label>
+                    <select id="patternTemplate" onchange="loadPatternTemplate(this.value)">
+                        <option value="">Start from blank</option>
+                        <option value="basic">Basic Analysis</option>
+                        <option value="writing">Writing Assistant</option>
+                        <option value="summarize">Content Summarizer</option>
+                        <option value="extract">Information Extractor</option>
+                        <option value="creative">Creative Generator</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customPatternContent">Pattern Content</label>
+                    <div class="pattern-editor-container">
+                        <div class="editor-tabs">
+                            <button type="button" class="editor-tab active" onclick="switchEditorTab('edit')">✏️ Edit</button>
+                            <button type="button" class="editor-tab" onclick="switchEditorTab('preview')">👁️ Preview</button>
+                        </div>
+                        <div class="tab-content" id="editTab">
+                            <textarea id="customPatternContent" class="pattern-editor" rows="20" placeholder="Enter your pattern instructions here..."></textarea>
+                        </div>
+                        <div class="tab-content" id="previewTab" style="display: none;">
+                            <div class="pattern-preview-content" id="patternPreviewText"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeCustomPatternDialog()">Cancel</button>
+                <button class="btn-primary" onclick="saveCustomPattern()">Save Pattern</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="js/api.js"></script>
     <script src="js/themes.js"></script>
+    <script src="js/settings.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/app.js"></script>
-    <script src="js/settings.js"></script>
 </body>
 </html>

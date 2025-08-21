@@ -197,26 +197,58 @@ class UIManager {
         const select = document.getElementById('patternSelect');
         if (!select) return;
 
+        // Store patterns reference for settings manager
+        this.patterns = patterns;
+        
+        // Also store on window for global access
+        if (window.ui) {
+            window.ui.patterns = patterns;
+        }
+
         select.innerHTML = '<option value="">Select a pattern...</option>';
         
         Object.entries(patterns).forEach(([category, categoryPatterns]) => {
             if (categoryPatterns.length > 0) {
                 const optgroup = document.createElement('optgroup');
-                optgroup.label = category;
+                optgroup.label = this.formatCategoryName(category);
                 
                 categoryPatterns.forEach(pattern => {
                     const option = document.createElement('option');
-                    option.value = pattern.id;
-                    option.textContent = pattern.name;
-                    option.title = pattern.description;
-                    optgroup.appendChild(option);
+                    // Use id (internal name) as value, name (display name) as text
+                    const patternId = pattern.id || pattern.name || pattern;
+                    const patternDisplayName = pattern.name || pattern.displayName || pattern;
                     
-                    this.patterns.set(pattern.id, pattern);
+                    option.value = patternId;
+                    option.textContent = patternDisplayName;
+                    option.title = pattern.description || 'AI pattern for text processing';
+                    
+                    // Add custom pattern indicator
+                    if (category === 'custom') {
+                        option.textContent += ' (Custom)';
+                    }
+                    
+                    optgroup.appendChild(option);
                 });
                 
                 select.appendChild(optgroup);
             }
         });
+
+        // Only populate pattern toggles on the initial load, not on every filter update
+        if (!window.ui._patternsInitialized) {
+            setTimeout(() => {
+                if (window.settingsManager && window.settingsManager.populatePatternToggles) {
+                    console.log('UI: Initial pattern toggle population with patterns:', this.patterns);
+                    window.settingsManager.populatePatternToggles();
+                    window.ui._patternsInitialized = true;
+                }
+            }, 100);
+        }
+    }
+
+    formatCategoryName(category) {
+        return category.replace(/_/g, ' ')
+                      .replace(/\b\w/g, l => l.toUpperCase());
     }
 
     async onPatternChange(patternId) {
@@ -667,6 +699,9 @@ class UIManager {
 
 // Global UI manager
 const ui = new UIManager();
+
+// Make UI manager globally accessible
+window.ui = ui;
 
 // Global functions for inline handlers
 function switchInputType(type) {

@@ -42,6 +42,7 @@ class UnravelService {
 
     async loadPatterns() {
         try {
+            // Load built-in patterns
             await fs.access(this.patternsDir);
             const patternDirs = await fs.readdir(this.patternsDir);
             
@@ -74,6 +75,31 @@ class UnravelService {
                         console.warn(`Failed to load pattern ${dir}:`, error.message);
                     }
                 }
+            }
+            
+            // Load custom patterns
+            try {
+                const customPatternsPath = path.join(__dirname, '../../../config/custom_patterns');
+                await fs.access(customPatternsPath);
+                const customPatternDirs = await fs.readdir(customPatternsPath);
+                
+                for (const dir of customPatternDirs) {
+                    const dirPath = path.join(customPatternsPath, dir);
+                    const stat = await fs.stat(dirPath);
+                    
+                    if (stat.isDirectory()) {
+                        try {
+                            const pattern = await this.loadCustomPattern(dirPath, dir);
+                            if (pattern) {
+                                this.patterns.set(dir, { ...pattern, custom: true });
+                            }
+                        } catch (error) {
+                            console.warn(`Failed to load custom pattern ${dir}:`, error.message);
+                        }
+                    }
+                }
+            } catch (error) {
+                // No custom patterns directory yet, that's fine
             }
             
             console.log(`✅ Loaded ${this.patterns.size} patterns`);
@@ -491,6 +517,208 @@ class UnravelService {
             
         } catch (error) {
             throw new Error(`Failed to process YouTube video: ${error.message}`);
+        }
+    }
+
+    // Settings persistence
+    async getSettings() {
+        try {
+            const configPath = path.join(__dirname, '../../../config');
+            await fs.mkdir(configPath, { recursive: true });
+            
+            const settingsPath = path.join(configPath, 'settings.json');
+            
+            try {
+                const settingsData = await fs.readFile(settingsPath, 'utf8');
+                const settings = JSON.parse(settingsData);
+                
+                // Merge with environment variables for API keys (env vars take precedence)
+                const mergedSettings = {
+                    ...settings,
+                    apiKeys: {
+                        ...settings.apiKeys,
+                        ...(process.env.OPENAI_API_KEY && { openai: process.env.OPENAI_API_KEY }),
+                        ...(process.env.ANTHROPIC_API_KEY && { anthropic: process.env.ANTHROPIC_API_KEY }),
+                        ...(process.env.OPENROUTER_API_KEY && { openrouter: process.env.OPENROUTER_API_KEY }),
+                        ...(process.env.GROK_API_KEY && { grok: process.env.GROK_API_KEY }),
+                        ...(process.env.YOUTUBE_API_KEY && { youtube: process.env.YOUTUBE_API_KEY }),
+                        ...(process.env.JINA_API_KEY && { jina: process.env.JINA_API_KEY })
+                    }
+                };
+                
+                return mergedSettings;
+            } catch (error) {
+                // File doesn't exist or is invalid, return default settings with env vars
+                return this.getDefaultSettings();
+            }
+        } catch (error) {
+            console.warn('Failed to get settings:', error.message);
+            return this.getDefaultSettings();
+        }
+    }
+
+    async saveSettings(settings) {
+        try {
+            const configPath = path.join(__dirname, '../../../config');
+            await fs.mkdir(configPath, { recursive: true });
+            
+            const settingsPath = path.join(configPath, 'settings.json');
+            
+            // Don't save API keys that match environment variables
+            const filteredSettings = {
+                ...settings,
+                apiKeys: {
+                    ...settings.apiKeys
+                }
+            };
+            
+            // Remove API keys that match environment variables (they shouldn't be persisted)
+            if (process.env.OPENAI_API_KEY && filteredSettings.apiKeys.openai === process.env.OPENAI_API_KEY) {
+                delete filteredSettings.apiKeys.openai;
+            }
+            if (process.env.ANTHROPIC_API_KEY && filteredSettings.apiKeys.anthropic === process.env.ANTHROPIC_API_KEY) {
+                delete filteredSettings.apiKeys.anthropic;
+            }
+            if (process.env.OPENROUTER_API_KEY && filteredSettings.apiKeys.openrouter === process.env.OPENROUTER_API_KEY) {
+                delete filteredSettings.apiKeys.openrouter;
+            }
+            if (process.env.GROK_API_KEY && filteredSettings.apiKeys.grok === process.env.GROK_API_KEY) {
+                delete filteredSettings.apiKeys.grok;
+            }
+            if (process.env.YOUTUBE_API_KEY && filteredSettings.apiKeys.youtube === process.env.YOUTUBE_API_KEY) {
+                delete filteredSettings.apiKeys.youtube;
+            }
+            if (process.env.JINA_API_KEY && filteredSettings.apiKeys.jina === process.env.JINA_API_KEY) {
+                delete filteredSettings.apiKeys.jina;
+            }
+            
+            // Add metadata
+            filteredSettings.lastUpdated = new Date().toISOString();
+            filteredSettings.version = '1.0.0';
+            
+            await fs.writeFile(settingsPath, JSON.stringify(filteredSettings, null, 2), 'utf8');
+            
+            return {
+                saved: true,
+                path: settingsPath,
+                timestamp: filteredSettings.lastUpdated
+            };
+        } catch (error) {
+            throw new Error(`Failed to save settings: ${error.message}`);
+        }
+    }
+
+    getDefaultSettings() {
+        return {
+            apiKeys: {
+                openai: process.env.OPENAI_API_KEY || '',
+                anthropic: process.env.ANTHROPIC_API_KEY || '',
+                openrouter: process.env.OPENROUTER_API_KEY || '',
+                grok: process.env.GROK_API_KEY || '',
+                youtube: process.env.YOUTUBE_API_KEY || '',
+                jina: process.env.JINA_API_KEY || ''
+            },
+            preferences: {
+                saveResults: true,
+                showAdvanced: false
+            },
+            patterns: {
+                enabled: {},
+                custom: {}
+            },
+            version: '1.0.0',
+            created: new Date().toISOString()
+        };
+    }
+
+    // Custom pattern management
+    async saveCustomPattern(name, patternData) {
+        try {
+            const customPatternsPath = path.join(__dirname, '../../../config/custom_patterns');
+            await fs.mkdir(customPatternsPath, { recursive: true });
+            
+            const patternDir = path.join(customPatternsPath, name);
+            await fs.mkdir(patternDir, { recursive: true });
+            
+            const systemPath = path.join(patternDir, 'system.md');
+            await fs.writeFile(systemPath, patternData.content, 'utf8');
+            
+            // Save metadata
+            const metadataPath = path.join(patternDir, 'metadata.json');
+            const metadata = {
+                name,
+                category: patternData.category,
+                description: patternData.description,
+                created: patternData.created || new Date().toISOString(),
+                updated: new Date().toISOString(),
+                custom: true
+            };
+            await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2), 'utf8');
+            
+            // Update patterns in memory
+            this.patterns.set(name, {
+                name,
+                category: patternData.category,
+                description: patternData.description,
+                system: patternData.content,
+                custom: true
+            });
+            
+            return metadata;
+        } catch (error) {
+            throw new Error(`Failed to save custom pattern: ${error.message}`);
+        }
+    }
+
+    async deleteCustomPattern(name) {
+        try {
+            const customPatternsPath = path.join(__dirname, '../../../config/custom_patterns');
+            const patternDir = path.join(customPatternsPath, name);
+            
+            // Remove directory and all contents
+            await fs.rm(patternDir, { recursive: true, force: true });
+            
+            // Remove from memory
+            this.patterns.delete(name);
+            
+            return true;
+        } catch (error) {
+            throw new Error(`Failed to delete custom pattern: ${error.message}`);
+        }
+    }
+
+
+    async loadCustomPattern(patternDir, patternName) {
+        try {
+            const systemFile = path.join(patternDir, 'system.md');
+            const metadataFile = path.join(patternDir, 'metadata.json');
+            
+            let metadata = {};
+            try {
+                const metadataContent = await fs.readFile(metadataFile, 'utf8');
+                metadata = JSON.parse(metadataContent);
+            } catch (error) {
+                // No metadata file, create basic metadata
+                metadata = {
+                    name: patternName,
+                    category: 'custom',
+                    description: 'Custom pattern',
+                    created: new Date().toISOString()
+                };
+            }
+            
+            const systemContent = await fs.readFile(systemFile, 'utf8');
+            
+            return {
+                name: patternName,
+                category: metadata.category || 'custom',
+                description: metadata.description || 'Custom pattern',
+                system: systemContent,
+                user: '', // Custom patterns might not have user prompts
+                custom: true
+            };
+        } catch (error) {
+            throw error;
         }
     }
 
