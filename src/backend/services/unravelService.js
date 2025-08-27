@@ -5,6 +5,7 @@
 
 const fs = require('fs').promises;
 const path = require('path');
+const packageJson = require('../../../package.json');
 const axios = require('axios');
 const { OllamaProvider, OpenAIProvider, AnthropicProvider, OpenRouterProvider, GrokProvider } = require('./aiProviders');
 const YTDlpWrap = require('yt-dlp-wrap').default;
@@ -594,7 +595,7 @@ class UnravelService {
             
             // Add metadata
             filteredSettings.lastUpdated = new Date().toISOString();
-            filteredSettings.version = '1.0.0';
+            filteredSettings.version = packageJson.version;
             
             await fs.writeFile(settingsPath, JSON.stringify(filteredSettings, null, 2), 'utf8');
             
@@ -626,7 +627,7 @@ class UnravelService {
                 enabled: {},
                 custom: {}
             },
-            version: '1.0.0',
+            version: packageJson.version,
             created: new Date().toISOString()
         };
     }
@@ -729,7 +730,7 @@ class UnravelService {
         
         return {
             status: 'online',
-            version: '1.0.0',
+            version: packageJson.version,
             patterns: this.patterns.size,
             providers: {
                 total: providers.length,
