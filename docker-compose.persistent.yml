@@ -23,6 +23,7 @@ services:
       # - ./patterns:/app/patterns:ro
     restart: unless-stopped
     networks:
+      - homelab
       - unravel-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3006/api/status"]
@@ -40,5 +41,9 @@ volumes:
       device: ./config
 
 networks:
+  homelab:
+    external: true
+    name: homelab_homelab
   unravel-network:
-    driver: bridge
+    external: true
+    name: unravel_unravel-network

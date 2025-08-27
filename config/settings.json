@@ -1,0 +1,11 @@
+{
+  "apiKeys": {
+    "jina": "jina_4ae332cb40434d1faaa14109dfea32d1OM2K3jy0v6ubNu1b5yOFWVjIAwAR",
+    "openai": "sk-test123"
+  },
+  "preferences": {
+    "saveResults": true
+  },
+  "lastUpdated": "2025-08-27T17:33:48.990Z",
+  "version": "1.1.0"
+}

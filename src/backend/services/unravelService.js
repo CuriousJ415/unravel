@@ -315,12 +315,26 @@ class UnravelService {
 
     // URL scraping with Jina AI (preferred) and fallback
     async scrapeURL(url) {
+        console.log('🔍 Starting URL scraping for:', url);
+        
+        // Get Jina API key from environment or settings
+        let jinaApiKey = process.env.JINA_API_KEY;
+        if (!jinaApiKey) {
+            try {
+                const settings = await this.getSettings();
+                jinaApiKey = settings.apiKeys?.jina;
+            } catch (error) {
+                console.warn('Could not load settings for Jina API key:', error.message);
+            }
+        }
+        
         // Try Jina AI first for clean, LLM-friendly text
-        if (process.env.JINA_API_KEY) {
+        if (jinaApiKey) {
+            console.log('🧠 Trying Jina AI with key:', jinaApiKey ? 'present' : 'missing');
             try {
                 const jinaResponse = await axios.get(`https://r.jina.ai/${url}`, {
                     headers: {
-                        'Authorization': `Bearer ${process.env.JINA_API_KEY}`,
+                        'Authorization': `Bearer ${jinaApiKey}`,
                         'User-Agent': 'Unravel/1.0'
                     },
                     timeout: 15000
@@ -334,11 +348,12 @@ class UnravelService {
                     source: 'jina'
                 };
             } catch (jinaError) {
-                console.warn('Jina scraping failed, falling back to cheerio:', jinaError.message);
+                console.warn('🚨 Jina scraping failed, falling back to cheerio:', jinaError.message);
             }
         }
         
         // Fallback to cheerio scraping
+        console.log('📄 Falling back to cheerio scraping');
         try {
             const response = await axios.get(url, {
                 headers: {
@@ -364,6 +379,7 @@ class UnravelService {
                 source: 'cheerio'
             };
         } catch (error) {
+            console.error('❌ Cheerio scraping failed:', error.message, error.stack);
             throw new Error(`Failed to scrape URL: ${error.message}`);
         }
     }
