@@ -11,6 +11,7 @@ class UnravelAPI {
     async request(endpoint, options = {}) {
         const url = `${this.baseURL}${endpoint}`;
         const config = {
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
                 ...options.headers

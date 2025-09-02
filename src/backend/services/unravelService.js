@@ -118,6 +118,11 @@ class UnravelService {
     }
 
     categorizePattern(patternName) {
+        // Check for enhanced patterns first
+        if (patternName.endsWith('_enhanced')) {
+            return 'Enhanced';
+        }
+
         const categories = {
             'Analysis': ['analyze', 'extract', 'review', 'rate', 'compare', 'check'],
             'Writing': ['summarize', 'improve', 'write', 'create_essay', 'tweet', 'formal'],

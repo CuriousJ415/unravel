@@ -79,7 +79,9 @@ class SettingsManager {
             // Try to load from backend first
             if (window.api) {
                 try {
-                    const response = await fetch('/api/settings');
+                    const response = await fetch('/api/settings', {
+                        credentials: 'include'
+                    });
                     if (response.ok) {
                         const backendSettings = await response.json();
                         console.log('Loaded settings from backend:', backendSettings);
@@ -163,6 +165,7 @@ class SettingsManager {
                         headers: {
                             'Content-Type': 'application/json'
                         },
+                        credentials: 'include',
                         body: JSON.stringify(this.settings)
                     });
                     
@@ -590,6 +593,7 @@ SettingsManager.prototype.addCustomPattern = async function(name, category, desc
                     headers: {
                         'Content-Type': 'application/json'
                     },
+                    credentials: 'include',
                     body: JSON.stringify({
                         name,
                         category,
